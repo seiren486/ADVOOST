@@ -3,7 +3,7 @@
 import { FileUploadSlot } from "@/components/file-upload-slot"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, Upload } from "lucide-react"
+import { BarChart3, Upload, Loader2 } from "lucide-react"
 
 interface UploadViewProps {
   files: {
@@ -13,9 +13,10 @@ interface UploadViewProps {
   }
   onFileChange: (key: keyof UploadViewProps["files"], file: File | null) => void
   onRunAnalysis: () => void
+  isLoading?: boolean
 }
 
-export function UploadView({ files, onFileChange, onRunAnalysis }: UploadViewProps) {
+export function UploadView({ files, onFileChange, onRunAnalysis, isLoading = false }: UploadViewProps) {
   const allFilesUploaded = files.previousMonth && files.currentMonth && files.teamNames
 
   return (
@@ -58,11 +59,18 @@ export function UploadView({ files, onFileChange, onRunAnalysis }: UploadViewPro
 
           <Button
             onClick={onRunAnalysis}
-            disabled={!allFilesUploaded}
+            disabled={!allFilesUploaded || isLoading}
             size="lg"
             className="w-full text-base font-semibold"
           >
-            분석 실행
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                분석 중...
+              </>
+            ) : (
+              "분석 실행"
+            )}
           </Button>
 
           {!allFilesUploaded && (

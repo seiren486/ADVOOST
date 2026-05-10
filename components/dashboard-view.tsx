@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -24,36 +25,8 @@ import {
 
 interface DashboardViewProps {
   onBack: () => void
+  data: any
 }
-
-// 매출 구간별 데이터
-const revenueTierData = [
-  { tier: "5만원 이상", previousMonth: 12, currentMonth: 18 },
-  { tier: "4만~5만원", previousMonth: 8, currentMonth: 11 },
-  { tier: "3만~4만원", previousMonth: 15, currentMonth: 14 },
-  { tier: "2만~3만원", previousMonth: 22, currentMonth: 28 },
-  { tier: "1만~2만원", previousMonth: 35, currentMonth: 42 },
-  { tier: "1원~1만원", previousMonth: 58, currentMonth: 67 },
-]
-
-// 팀별 성과 데이터
-const teamPerformanceData = [
-  { team: "엔터프라이즈", previousMonth: 5, currentMonth: 8 },
-  { team: "SMB", previousMonth: 4, currentMonth: 6 },
-  { team: "미드마켓", previousMonth: 2, currentMonth: 3 },
-  { team: "전략영업", previousMonth: 1, currentMonth: 1 },
-]
-
-// 마케터별 상세 데이터
-const marketerData = [
-  { team: "엔터프라이즈", marketer: "김민수", previousMonth: 3, currentMonth: 4, diff: 1 },
-  { team: "엔터프라이즈", marketer: "이지현", previousMonth: 2, currentMonth: 4, diff: 2 },
-  { team: "SMB", marketer: "박서연", previousMonth: 2, currentMonth: 3, diff: 1 },
-  { team: "SMB", marketer: "최준혁", previousMonth: 2, currentMonth: 3, diff: 1 },
-  { team: "미드마켓", marketer: "정하나", previousMonth: 1, currentMonth: 2, diff: 1 },
-  { team: "미드마켓", marketer: "강동훈", previousMonth: 1, currentMonth: 1, diff: 0 },
-  { team: "전략영업", marketer: "윤서영", previousMonth: 1, currentMonth: 1, diff: 0 },
-]
 
 const chartConfig = {
   previousMonth: {
@@ -66,7 +39,111 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function DashboardView({ onBack }: DashboardViewProps) {
+export function DashboardView({ onBack, data }: DashboardViewProps) {
+  // 1. 매출 구간별 데이터 가공
+  const revenueTierData = useMemo(() => {
+    if (!data?.category_1_revenue_tiers) return []
+    const prev = data.category_1_revenue_tiers.previous_month
+    const curr = data.category_1_revenue_tiers.current_month
+    
+    const tiers = [
+      "50,000원 이상",
+      "40,000원 이상 ~ 50,000원 미만",
+      "30,000원 이상 ~ 40,000원 미만",
+      "20,000원 이상 ~ 30,000원 미만",
+      "10,000원 이상 ~ 20,000원 미만",
+      "1원 이상 ~ 10,000원 미만"
+    ]
+    
+    return tiers.map(tier => ({
+      tier: tier.replace(" 이상", "").replace(" 미만", "").replace(" ~ ", "~"),
+      previousMonth: prev[tier] || 0,
+      currentMonth: curr[tier] || 0
+    }))
+  }, [data])
+
+  // 2. 팀별 성과 데이터 가공 (5만원 이상)
+  const teamPerformanceData = useMemo(() => {
+    if (!data?.category_2_team_over_50k) return []
+    const prev = data.category_2_team_over_50k.previous_month
+    const curr = data.category_2_team_over_50k.current_month
+    
+    // 모든 팀 이름 추출
+    const allTeams = Array.from(new Set([...Object.keys(prev), ...Object.keys(curr)]))
+    
+    return allTeams.map(team => ({
+      team,
+      previousMonth: prev[team] || 0,
+      currentMonth: curr[team] || 0
+    })).sort((a, b) => b.currentMonth - a.currentMonth)
+  }, [data])
+
+  // 3. 마케터별 상세 데이터 가공
+  const marketerData = useMemo(() => {
+    if (!data?.category_3_team_marketer_over_50k) return []
+    const prev = data.category_3_team_marketer_over_50k.previous_month
+    const curr = data.category_3_team_marketer_over_50k.current_month
+    
+    const allKeys = Array.from(new Set([...Object.keys(prev), ...Object.keys(curr)]))
+    
+    return allKeys.map(key => {
+      // key: "팀이름 - 마케터이름"
+      const parts = key.split(" - ")
+      const team = parts[0] || "미분류"
+      const marketer = parts[1] || "미분류"
+      
+      const pVal = prev[key] || 0
+      const cVal = curr[key] || 0
+      
+      return {
+        team,
+        marketer,
+        previousMonth: pVal,
+        currentMonth: cVal,
+        diff: cVal - pVal
+      }
+    }).sort((a, b) => b.currentMonth - a.currentMonth || b.diff - a.diff)
+  }, [data])
+
+  // 요약 통계 계산
+  const summaryStats = useMemo(() => {
+    if (!data?.category_1_revenue_tiers) return {
+      totalPrev: 0, totalCurr: 0, topTeam: "-", topTeamCount: 0, topMarketer: "-", topMarketerDiff: 0
+    }
+    
+    const prevTiers = data.category_1_revenue_tiers.previous_month
+    const currTiers = data.category_1_revenue_tiers.current_month
+    const totalPrev = prevTiers["50,000원 이상"] || 0
+    const totalCurr = currTiers["50,000원 이상"] || 0
+    
+    let topTeam = "-"
+    let topTeamCount = 0
+    if (teamPerformanceData.length > 0) {
+      topTeam = teamPerformanceData[0].team
+      topTeamCount = teamPerformanceData[0].currentMonth
+    }
+    
+    let topMarketer = "-"
+    let topMarketerDiff = 0
+    if (marketerData.length > 0) {
+      // 성장률(diff)이 가장 높은 마케터
+      const bestGrowth = [...marketerData].sort((a, b) => b.diff - a.diff)[0]
+      if (bestGrowth && bestGrowth.diff > 0) {
+        topMarketer = bestGrowth.marketer
+        topMarketerDiff = bestGrowth.diff
+      } else {
+        topMarketer = marketerData[0].marketer
+        topMarketerDiff = marketerData[0].diff
+      }
+    }
+    
+    return { totalPrev, totalCurr, topTeam, topTeamCount, topMarketer, topMarketerDiff }
+  }, [data, teamPerformanceData, marketerData])
+
+  const diffPercent = summaryStats.totalPrev > 0 
+    ? Math.round(((summaryStats.totalCurr - summaryStats.totalPrev) / summaryStats.totalPrev) * 100) 
+    : (summaryStats.totalCurr > 0 ? 100 : 0)
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -88,11 +165,13 @@ export function DashboardView({ onBack }: DashboardViewProps) {
           <CardContent className="flex items-center justify-between p-6">
             <div>
               <p className="text-sm font-medium text-muted-foreground">당월 5만원 이상 전체 계정 수</p>
-              <p className="text-4xl font-bold text-foreground">18</p>
+              <p className="text-4xl font-bold text-foreground">{summaryStats.totalCurr}</p>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <Badge className="bg-green-500 text-white">+50%</Badge>
-              <p className="text-sm text-muted-foreground">전월 대비 +6</p>
+              <Badge className={diffPercent >= 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
+                {diffPercent > 0 ? `+${diffPercent}%` : `${diffPercent}%`}
+              </Badge>
+              <p className="text-sm text-muted-foreground">전월 대비 {summaryStats.totalCurr - summaryStats.totalPrev > 0 ? "+" : ""}{summaryStats.totalCurr - summaryStats.totalPrev}</p>
             </div>
           </CardContent>
         </Card>
@@ -228,10 +307,12 @@ export function DashboardView({ onBack }: DashboardViewProps) {
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground">18</span>
-                <Badge className="bg-green-500 text-white">+50%</Badge>
+                <span className="text-3xl font-bold text-foreground">{summaryStats.totalCurr}</span>
+                <Badge className={diffPercent >= 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
+                  {diffPercent > 0 ? `+${diffPercent}%` : `${diffPercent}%`}
+                </Badge>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">전월 12개 대비 증가</p>
+              <p className="mt-1 text-sm text-muted-foreground">전월 {summaryStats.totalPrev}개 대비 {summaryStats.totalCurr - summaryStats.totalPrev >= 0 ? "증가" : "감소"}</p>
             </CardContent>
           </Card>
           <Card>
@@ -240,20 +321,20 @@ export function DashboardView({ onBack }: DashboardViewProps) {
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground">엔터프라이즈</span>
+                <span className="text-3xl font-bold text-foreground">{summaryStats.topTeam}</span>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">5만원 이상 계정 8개</p>
+              <p className="mt-1 text-sm text-muted-foreground">5만원 이상 계정 {summaryStats.topTeamCount}개</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>최고 성과자</CardDescription>
+              <CardDescription>최고 성과자 (계정 증가량)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground">김마케터</span>
+                <span className="text-3xl font-bold text-foreground">{summaryStats.topMarketer}</span>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">계정 +2 성장</p>
+              <p className="mt-1 text-sm text-muted-foreground">계정 {summaryStats.topMarketerDiff > 0 ? `+${summaryStats.topMarketerDiff}` : summaryStats.topMarketerDiff} 성장</p>
             </CardContent>
           </Card>
         </div>
