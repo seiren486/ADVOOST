@@ -20,7 +20,7 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
     # [Step 2] 수동 매칭 데이터 로드 및 전처리 (2차 매칭용)
     # ---------------------------------------------------------
     # 엑셀 헤더가 명확하지 않을 수 있으므로 header=None으로 로드
-    manual_df = pd.read_excel(manual_mapping_path, header=None)
+    manual_df = pd.read_excel(manual_mapping_path, header=None, engine='openpyxl')
     
     # A열(인덱스 0)은 광고계정 ID, L열(인덱스 11)은 팀 및 마케터 정보 추출
     manual_df = manual_df.iloc[:, [0, 11]]
@@ -48,7 +48,7 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
     # [Step 3] 매출 데이터 로드 및 전처리 공통 함수 정의
     # ---------------------------------------------------------
     def load_and_preprocess_sales(file_path):
-        df = pd.read_excel(file_path, header=None)
+        df = pd.read_excel(file_path, header=None, engine='openpyxl')
         
         # D열(인덱스 3)은 광고계정 ID, AU열(인덱스 46)은 매출액
         df = df.iloc[:, [3, 46]]
