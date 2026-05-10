@@ -8,6 +8,26 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
     전월/당월 매출, 수동 매칭 데이터, 기존 마케터 데이터를 병합 및 가공하여 Dictionary 형태로 반환합니다.
     """
     
+    def read_file_robust(file_obj):
+        if isinstance(file_obj, str):
+            if file_obj.endswith('.csv'):
+                try:
+                    return pd.read_csv(file_obj, header=None, encoding='utf-8')
+                except UnicodeDecodeError:
+                    return pd.read_csv(file_obj, header=None, encoding='cp949')
+            else:
+                return pd.read_excel(file_obj, header=None, engine='openpyxl')
+        
+        try:
+            return pd.read_excel(file_obj, header=None, engine='openpyxl')
+        except Exception:
+            file_obj.seek(0)
+            try:
+                return pd.read_csv(file_obj, header=None, encoding='utf-8')
+            except UnicodeDecodeError:
+                file_obj.seek(0)
+                return pd.read_csv(file_obj, header=None, encoding='cp949')
+
     # ---------------------------------------------------------
     # [Step 1] 베이스 마케터 데이터 로드 (1차 매칭용)
     # ---------------------------------------------------------
@@ -19,8 +39,8 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
     # ---------------------------------------------------------
     # [Step 2] 수동 매칭 데이터 로드 및 전처리 (2차 매칭용)
     # ---------------------------------------------------------
-    # 엑셀 헤더가 명확하지 않을 수 있으므로 header=None으로 로드
-    manual_df = pd.read_excel(manual_mapping_path, header=None, engine='openpyxl')
+    # 엑셀/CSV 등 포맷이 명확하지 않을 수 있으므로 header=None으로 로드
+    manual_df = read_file_robust(manual_mapping_path)
     
     # A열(인덱스 0)은 광고계정 ID, L열(인덱스 11)은 팀 및 마케터 정보 추출
     manual_df = manual_df.iloc[:, [0, 11]]
@@ -48,7 +68,7 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
     # [Step 3] 매출 데이터 로드 및 전처리 공통 함수 정의
     # ---------------------------------------------------------
     def load_and_preprocess_sales(file_path):
-        df = pd.read_excel(file_path, header=None, engine='openpyxl')
+        df = read_file_robust(file_path)
         
         # D열(인덱스 3)은 광고계정 ID, AU열(인덱스 46)은 매출액
         df = df.iloc[:, [3, 46]]
