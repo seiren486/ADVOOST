@@ -55,7 +55,14 @@ export function DashboardView({ onBack, data }: DashboardViewProps) {
       return
     }
 
-    const csvContent = "전월\n" + prevIds.join("\n") + "\n\n당월\n" + currIds.join("\n")
+    const maxLength = Math.max(prevIds.length, currIds.length)
+    let csvContent = "전월,당월\n"
+    for (let i = 0; i < maxLength; i++) {
+      const prev = prevIds[i] || ""
+      const curr = currIds[i] || ""
+      csvContent += `${prev},${curr}\n`
+    }
+
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")

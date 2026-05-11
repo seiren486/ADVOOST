@@ -185,8 +185,8 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
             'current_month': curr_cat3
         },
         'unclassified_account_ids': {
-            'previous_month': prev_final_df[prev_final_df['팀'] == '미분류']['광고계정ID'].astype(str).str.replace(r'\.0$', '', regex=True).unique().tolist(),
-            'current_month': curr_final_df[curr_final_df['팀'] == '미분류']['광고계정ID'].astype(str).str.replace(r'\.0$', '', regex=True).unique().tolist()
+            'previous_month': prev_final_df[(prev_final_df['팀'] == '미분류') & (prev_final_df['매출액'] >= 50000)]['광고계정ID'].astype(str).str.replace(r'\.0$', '', regex=True).unique().tolist(),
+            'current_month': curr_final_df[(curr_final_df['팀'] == '미분류') & (curr_final_df['매출액'] >= 50000)]['광고계정ID'].astype(str).str.replace(r'\.0$', '', regex=True).unique().tolist()
         }
     }
     
