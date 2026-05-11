@@ -63,6 +63,10 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
     # apply 함수를 이용해 '팀'과 '마케터' 컬럼을 새로 생성
     manual_df[['팀', '마케터']] = manual_df['팀_마케터'].apply(split_team_marketer)
     manual_df = manual_df.drop(columns=['팀_마케터']) # 기존 임시 컬럼 삭제
+    
+    # 중복 매핑 데이터 제거 (Join 시 데이터 증식 방지)
+    base_df = base_df.drop_duplicates(subset=['광고계정ID'], keep='first')
+    manual_df = manual_df.drop_duplicates(subset=['광고계정ID'], keep='first')
 
     # ---------------------------------------------------------
     # [Step 3] 매출 데이터 로드 및 전처리 공통 함수 정의
@@ -79,6 +83,9 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
         
         # 매출액 데이터에서 문자, 결측치를 0으로 변환 (에러 강제 처리)
         df['매출액'] = pd.to_numeric(df['매출액'], errors='coerce').fillna(0)
+        
+        # 중복된 광고계정이 있을 경우 매출액을 합산하여 1개의 계정으로 고유화
+        df = df.groupby('광고계정ID', as_index=False)['매출액'].sum()
         
         return df
 
