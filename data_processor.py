@@ -31,11 +31,22 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
     # ---------------------------------------------------------
     # [Step 1] 베이스 마케터 데이터 로드 (1차 매칭용)
     # ---------------------------------------------------------
-    # 기존마케터데이터.csv 로드
-    base_df = pd.read_csv(base_marketer_path)
+    # 기존마케터데이터.csv 로드 (사용자가 엑셀에서 붙여넣을 경우 탭 구분자, 한글 인코딩 등 예외 상황 처리)
+    try:
+        base_df = pd.read_csv(base_marketer_path, encoding='utf-8')
+        if len(base_df.columns) <= 1:
+            base_df = pd.read_csv(base_marketer_path, sep='\t', encoding='utf-8')
+    except UnicodeDecodeError:
+        base_df = pd.read_csv(base_marketer_path, encoding='cp949')
+        if len(base_df.columns) <= 1:
+            base_df = pd.read_csv(base_marketer_path, sep='\t', encoding='cp949')
+            
+    # 헤더에 공백이 섞여있을 수 있으므로 공백 제거
+    base_df.columns = [str(col).replace(' ', '') for col in base_df.columns]
+    
     # 병합 시 타입 불일치 방지를 위해 광고계정 ID를 문자열로 통일
-    base_df['광고계정ID'] = base_df['광고계정ID'].astype(str)
-
+    if '광고계정ID' in base_df.columns:
+        base_df['광고계정ID'] = base_df['광고계정ID'].astype(str)
     # ---------------------------------------------------------
     # [Step 2] 수동 매칭 데이터 로드 및 전처리 (2차 매칭용)
     # ---------------------------------------------------------

@@ -19,11 +19,15 @@ def process_data():
         curr_month = request.files['currentMonth']
         manual_mapping = request.files['teamNames']
 
-        # 서버에 고정된 기존마케터데이터.csv 경로
-        base_marketer_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', '기존마케터데이터.csv')
+        # 서버에 고정된 기존마케터데이터.csv 또는 .txt 경로
+        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
+        base_marketer_path = os.path.join(base_dir, '기존마케터데이터.csv')
+        base_marketer_path_txt = os.path.join(base_dir, '기존마케터데이터.txt')
 
-        if not os.path.exists(base_marketer_path):
-            return jsonify({'error': '서버에 기존마케터데이터.csv 파일이 존재하지 않습니다. data/ 폴더에 추가해주세요.'}), 500
+        if os.path.exists(base_marketer_path_txt):
+            base_marketer_path = base_marketer_path_txt
+        elif not os.path.exists(base_marketer_path):
+            return jsonify({'error': '서버에 기존마케터데이터.csv 또는 .txt 파일이 존재하지 않습니다. data/ 폴더에 추가해주세요.'}), 500
 
         # 파일 객체를 그대로 파이썬 함수로 전달
         # data_processor.py는 BytesIO와 같은 file-like 객체를 읽을 수 있어야 함
