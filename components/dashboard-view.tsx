@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, Download } from "lucide-react"
 import {
   Bar,
   BarChart,
@@ -40,6 +40,24 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function DashboardView({ onBack, data }: DashboardViewProps) {
+  const downloadUnclassifiedCSV = () => {
+    if (!data?.unclassified_account_ids || data.unclassified_account_ids.length === 0) {
+      alert("미분류된 광고계정 ID가 없습니다.")
+      return
+    }
+
+    const ids = data.unclassified_account_ids
+    const csvContent = "광고계정ID\n" + ids.join("\n")
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", "미분류_광고계정_리스트.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   // 1. 매출 구간별 데이터 가공
   const revenueTierData = useMemo(() => {
     if (!data?.category_1_revenue_tiers) return []
@@ -148,16 +166,22 @@ export function DashboardView({ onBack, data }: DashboardViewProps) {
     <div className="min-h-screen p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">분석 대시보드</h1>
-            <p className="text-sm text-muted-foreground">
-              전월 vs 당월 성과 비교
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">분석 대시보드</h1>
+              <p className="text-sm text-muted-foreground">
+                전월 vs 당월 성과 비교
+              </p>
+            </div>
           </div>
+          <Button variant="outline" onClick={downloadUnclassifiedCSV}>
+            <Download className="mr-2 h-4 w-4" />
+            미분류 계정 다운로드
+          </Button>
         </div>
 
         {/* 당월 5만원 이상 전체 계정 수 */}

@@ -183,7 +183,11 @@ def process_sales_dashboard_data(prev_month_path, curr_month_path, manual_mappin
         'category_3_team_marketer_over_50k': {
             'previous_month': prev_cat3,
             'current_month': curr_cat3
-        }
+        },
+        'unclassified_account_ids': list(set(
+            prev_final_df[prev_final_df['팀'] == '미분류']['광고계정ID'].unique().tolist() +
+            curr_final_df[curr_final_df['팀'] == '미분류']['광고계정ID'].unique().tolist()
+        ))
     }
     
     return dashboard_data
