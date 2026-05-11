@@ -157,20 +157,15 @@ export function DashboardView({ onBack, data }: DashboardViewProps) {
     }
     
     let topMarketer = "-"
-    let topMarketerDiff = 0
+    let topMarketerCount = 0
     if (marketerData.length > 0) {
-      // 성장률(diff)이 가장 높은 마케터
-      const bestGrowth = [...marketerData].sort((a, b) => b.diff - a.diff)[0]
-      if (bestGrowth && bestGrowth.diff > 0) {
-        topMarketer = bestGrowth.marketer
-        topMarketerDiff = bestGrowth.diff
-      } else {
-        topMarketer = marketerData[0].marketer
-        topMarketerDiff = marketerData[0].diff
-      }
+      // 당월 달성갯수(currentMonth)가 가장 많은 마케터
+      const bestPerformer = [...marketerData].sort((a, b) => b.currentMonth - a.currentMonth)[0]
+      topMarketer = bestPerformer.marketer
+      topMarketerCount = bestPerformer.currentMonth
     }
     
-    return { totalPrev, totalCurr, topTeam, topTeamCount, topMarketer, topMarketerDiff }
+    return { totalPrev, totalCurr, topTeam, topTeamCount, topMarketer, topMarketerCount }
   }, [data, teamPerformanceData, marketerData])
 
   const diffPercent = summaryStats.totalPrev > 0 
@@ -367,13 +362,13 @@ export function DashboardView({ onBack, data }: DashboardViewProps) {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>최고 성과자 (계정 증가량)</CardDescription>
+              <CardDescription>최고 성과자 (당월 달성)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground">{summaryStats.topMarketer}</span>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">계정 {summaryStats.topMarketerDiff > 0 ? `+${summaryStats.topMarketerDiff}` : summaryStats.topMarketerDiff} 성장</p>
+              <p className="mt-1 text-sm text-muted-foreground">당월 5만원 이상 계정 {summaryStats.topMarketerCount}개</p>
             </CardContent>
           </Card>
         </div>
