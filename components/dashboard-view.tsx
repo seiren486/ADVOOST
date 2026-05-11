@@ -219,27 +219,58 @@ export function DashboardView({ onBack, data }: DashboardViewProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] w-full">
-              <BarChart data={revenueTierData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="tier" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `${value}개`} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar
-                  dataKey="previousMonth"
-                  name="전월"
-                  fill="var(--color-previousMonth)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="currentMonth"
-                  name="당월"
-                  fill="var(--color-currentMonth)"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ChartContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="h-[350px]">
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <BarChart data={revenueTierData} layout="horizontal" margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="tier" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `${value}개`} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                    <Bar
+                      dataKey="previousMonth"
+                      name="전월"
+                      fill="var(--color-previousMonth)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="currentMonth"
+                      name="당월"
+                      fill="var(--color-currentMonth)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </div>
+              <div className="flex flex-col justify-center">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>매출 구간</TableHead>
+                      <TableHead className="text-right">전월</TableHead>
+                      <TableHead className="text-right">당월</TableHead>
+                      <TableHead className="text-right">변동</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {revenueTierData.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium text-sm py-3">{row.tier}</TableCell>
+                        <TableCell className="text-right">{row.previousMonth}개</TableCell>
+                        <TableCell className="text-right">{row.currentMonth}개</TableCell>
+                        <TableCell className="text-right">
+                          <span className={row.currentMonth - row.previousMonth >= 0 ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+                            {row.currentMonth - row.previousMonth > 0 ? "▲" : row.currentMonth - row.previousMonth < 0 ? "▼" : "-"}
+                            {Math.abs(row.currentMonth - row.previousMonth)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
