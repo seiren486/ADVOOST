@@ -41,13 +41,21 @@ const chartConfig = {
 
 export function DashboardView({ onBack, data }: DashboardViewProps) {
   const downloadUnclassifiedCSV = () => {
-    if (!data?.unclassified_account_ids || data.unclassified_account_ids.length === 0) {
+    const unclassified = data?.unclassified_account_ids
+    if (!unclassified) {
+      alert("미분류된 광고계정 ID 데이터가 없습니다.")
+      return
+    }
+
+    const prevIds = unclassified.previous_month || []
+    const currIds = unclassified.current_month || []
+
+    if (prevIds.length === 0 && currIds.length === 0) {
       alert("미분류된 광고계정 ID가 없습니다.")
       return
     }
 
-    const ids = data.unclassified_account_ids
-    const csvContent = "광고계정ID\n" + ids.join("\n")
+    const csvContent = "전월\n" + prevIds.join("\n") + "\n\n당월\n" + currIds.join("\n")
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
