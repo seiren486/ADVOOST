@@ -306,33 +306,87 @@ export function DashboardView({ onBack, data }: DashboardViewProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={teamPerformanceData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" tickLine={false} axisLine={false} />
-                <YAxis
-                  dataKey="team"
-                  type="category"
-                  tickLine={false}
-                  axisLine={false}
-                  width={100}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar
-                  dataKey="previousMonth"
-                  name="전월"
-                  fill="var(--color-previousMonth)"
-                  radius={[0, 4, 4, 0]}
-                />
-                <Bar
-                  dataKey="currentMonth"
-                  name="당월"
-                  fill="var(--color-currentMonth)"
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ChartContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="h-[300px]">
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <BarChart data={teamPerformanceData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tickLine={false} axisLine={false} />
+                    <YAxis
+                      dataKey="team"
+                      type="category"
+                      tickLine={false}
+                      axisLine={false}
+                      width={100}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                    <Bar
+                      dataKey="previousMonth"
+                      name="전월"
+                      fill="var(--color-previousMonth)"
+                      radius={[0, 4, 4, 0]}
+                    />
+                    <Bar
+                      dataKey="currentMonth"
+                      name="당월"
+                      fill="var(--color-currentMonth)"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </div>
+              <div className="flex flex-col justify-center">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>팀명</TableHead>
+                      <TableHead className="text-right">전월</TableHead>
+                      <TableHead className="text-right">당월</TableHead>
+                      <TableHead className="text-right">변동</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teamPerformanceData.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium text-sm py-2">{row.team}</TableCell>
+                        <TableCell className="text-right">{row.previousMonth}개</TableCell>
+                        <TableCell className="text-right">{row.currentMonth}개</TableCell>
+                        <TableCell className="text-right">
+                          <span className={row.currentMonth - row.previousMonth >= 0 ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+                            {row.currentMonth - row.previousMonth > 0 ? "▲" : row.currentMonth - row.previousMonth < 0 ? "▼" : "-"}
+                            {Math.abs(row.currentMonth - row.previousMonth)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {/* 합계 행 */}
+                    <TableRow className="bg-muted/50 font-bold border-t-2">
+                      <TableCell className="py-2">합계</TableCell>
+                      <TableCell className="text-right">
+                        {teamPerformanceData.reduce((acc, curr) => acc + curr.previousMonth, 0)}개
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {teamPerformanceData.reduce((acc, curr) => acc + curr.currentMonth, 0)}개
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {(() => {
+                          const totalPrev = teamPerformanceData.reduce((acc, curr) => acc + curr.previousMonth, 0);
+                          const totalCurr = teamPerformanceData.reduce((acc, curr) => acc + curr.currentMonth, 0);
+                          const diff = totalCurr - totalPrev;
+                          return (
+                            <span className={diff >= 0 ? "text-green-600" : "text-red-600"}>
+                              {diff > 0 ? "▲" : diff < 0 ? "▼" : "-"}
+                              {Math.abs(diff)}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
