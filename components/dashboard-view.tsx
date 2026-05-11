@@ -267,6 +267,29 @@ export function DashboardView({ onBack, data }: DashboardViewProps) {
                         </TableCell>
                       </TableRow>
                     ))}
+                    {/* 합계 행 */}
+                    <TableRow className="bg-muted/50 font-bold border-t-2">
+                      <TableCell className="py-3">합계</TableCell>
+                      <TableCell className="text-right">
+                        {revenueTierData.reduce((acc, curr) => acc + curr.previousMonth, 0)}개
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {revenueTierData.reduce((acc, curr) => acc + curr.currentMonth, 0)}개
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {(() => {
+                          const totalPrev = revenueTierData.reduce((acc, curr) => acc + curr.previousMonth, 0);
+                          const totalCurr = revenueTierData.reduce((acc, curr) => acc + curr.currentMonth, 0);
+                          const diff = totalCurr - totalPrev;
+                          return (
+                            <span className={diff >= 0 ? "text-green-600" : "text-red-600"}>
+                              {diff > 0 ? "▲" : diff < 0 ? "▼" : "-"}
+                              {Math.abs(diff)}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </div>
